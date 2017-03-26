@@ -3,12 +3,18 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
   // TODO: SUPPORT WINDOWS
 
   const path = require('path');
+  const opsys = require('./osdetect');
 
   const EXIT_SUCCESS = 0;
   const EXIT_BAD_ARGS = 1;
   const EXIT_APP_NOT_FOUND = 100;
 
+  const ENV_SCAN_DIR = 'OJI_SCRIPT_SCAN_DIR';
+  const ENV_CACHE_DIR = 'OJI_SCRIPT_CACHE_DIR';
+
   const ANY_VERSION = '*';
+
+  const DEFAULT_VALUE = "::default";
 
   const optionDefinitions = [
     // the default argument parser puts extra items in the key _unknown. We use that to determine the appname and any
@@ -16,23 +22,31 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
 
     {name: 'any', alias: 'a', type: Boolean, defaultValue: false, description:"Any version, including EAP (ignores -e and -t)."}, // overrides (skips) EAP and VERSION filters
     {name: 'eap', alias: 'e', type: Boolean, defaultValue: false, description:"Specify that we should allow EAP versions in our result set."},
-    {name: 'targetVersion', alias: 't', type: String, defaultValue: ANY_VERSION, description:"Filter for a version match or partial match. Omission or '*' means any."},
-    {name: 'scan', alias: 's', type: String, defaultValue: "~/Library/Application Support/JetBrains/Toolbox/apps", description:"The location on disk in which to scan for JetBrains Applications."},
+    {name: 'targetVersion', alias: 't', type: String, defaultValue: DEFAULT_VALUE, description:"Filter for a version match or partial match. Omission or '*' means any."},
+    {name: 'scan', alias: 's', type: String, defaultValue: DEFAULT_VALUE, description:"The location on disk in which to scan for JetBrains Applications."},
     {name: 'nocache', alias: 'n', type: Boolean, defaultValue: false, description:"Prevent caching of process intensive data, and ignore caches if available."},
     {name: 'jsonOnly', alias: 'j', type: Boolean, defaultValue: false, description:"Suppress output, returning results and output in the form of JSON."},
     {name: 'jsonSimple', type: Boolean, defaultValue: false, description:"Same as -j returning only the result if any."}
   ];
 
   const usageDefinition = [
-    {header: "Arguments:", optionList: optionDefinitions},
-    {
-      header: "Status Codes:",
-      content: [
-        {name: 'EXIT_SUCCESS: '+EXIT_SUCCESS, summary: 'The application exited with a successful result.'},
-        {name: 'EXIT_BAD_ARGS: '+EXIT_BAD_ARGS, summary: 'Bad arguments were provided to the application.'},
-        {name: 'EXIT_APP_NOT_FOUND: '+EXIT_APP_NOT_FOUND, summary: 'The IDE you requested could not be found, or a match with specified parameters could not be made.'}
-      ]
-    }
+      {header: "Arguments:", optionList: optionDefinitions},
+      {
+          header: "Environment Variables:",
+          content: [
+              {name:null, summary: "Environment variables only change the defaults, their values can still be modified at invocation via switches."},
+              {name: ENV_SCAN_DIR, summary: 'Directory to scan for applications.'},
+              {name: ENV_CACHE_DIR, summary: 'Default caching directory.'}
+          ]
+      },
+      {
+          header: "Status Codes:",
+          content: [
+              {name: 'EXIT_SUCCESS: '+EXIT_SUCCESS, summary: 'The application exited with a successful result.'},
+              {name: 'EXIT_BAD_ARGS: '+EXIT_BAD_ARGS, summary: 'Bad arguments were provided to the application.'},
+              {name: 'EXIT_APP_NOT_FOUND: '+EXIT_APP_NOT_FOUND, summary: 'The IDE you requested could not be found, or a match with specified parameters could not be made.'}
+          ]
+      }
   ];
 
   const apiMode = !!opts;
@@ -56,12 +70,7 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
     });
   }
 
-  function realizeTilde(filepath) {
-    if (filepath[0] === '~') {
-      return path.join(process.env.HOME, filepath.slice(1));
-    }
-    return filepath;
-  }
+
 
   function noop() {}
 
