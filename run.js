@@ -174,7 +174,7 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       parsed.scan = opsys.realizeTilde(parsed.scan === DEFAULT_VALUE ? opsys.toolboxAppScanRoot : parsed.scan);
       parsed._unknown = _.map(parsed._unknown || [], opsys.realizeTilde);
       parsed.targetVersion = parsed.targetVersion === ANY_VERSION ? null : parsed.targetVersion;
-      parsed.jsonOnly = parsed.jsonOnly || apiMode;
+      parsed.jsonOnly = parsed.jsonOnly || parsed.jsonSimple || apiMode;
 
 
       if (parsed.jsonOnly) {
