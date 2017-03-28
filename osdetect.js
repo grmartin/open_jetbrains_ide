@@ -16,6 +16,8 @@ module.exports = (function detect_and_load(memCached) {
 
   const SHOULD_CONTINUE_RECURSION = 'shouldRecurse';
   const FILE_FOUND = 'fileFound';
+  const FEED_FILE = '.feed';
+  const FEED_FILE_KEYS = ['build', 'id', 'version', 'quality', 'package', 'major_version'];
 
   let moduleData = {
     isWin, isDarwin, isMac, isUx,
@@ -28,7 +30,7 @@ module.exports = (function detect_and_load(memCached) {
         return filepath;
       },
       walker: {
-        SHOULD_CONTINUE_RECURSION, FILE_FOUND,
+        SHOULD_CONTINUE_RECURSION, FILE_FOUND, FEED_FILE, FEED_FILE_KEYS,
         function: function _walk_dirs(start, subr, contextStore) {
 
           if (!subr) throw new ReferenceError('The subr parameter must have a value.');
@@ -52,18 +54,16 @@ module.exports = (function detect_and_load(memCached) {
         }
       },
       walkerSubr: function _walkerSubrFunctor() {
-        importantKeys = ['build', 'id', 'version', 'quality', 'package', 'major_version'];
-
         obj = (resultType, filePath, stat, trackingContext) => {
           if (resultType === SHOULD_CONTINUE_RECURSION) {
             return !(trackingContext.baseDir && filePath.startsWith(trackingContext.baseDir));
           } else if (resultType === FILE_FOUND) {
-            if (filePath.endsWith('.feed')) {
+            if (filePath.endsWith(FEED_FILE)) {
               trackingContext.baseDir = path.dirname(filePath);
               trackingContext.apps.push({
                 filePath, stat,
                 baseDir: trackingContext.baseDir,
-                feedData: _.pickBy(JSON.parse(fs.readFileSync(filePath)), (v, k) => _.includes(importantKeys, k))
+                feedData: _.pickBy(JSON.parse(fs.readFileSync(filePath)), (v, k) => true || _.includes(FEED_FILE_KEYS, k))
               });
             }
           }
@@ -112,7 +112,7 @@ module.exports = (function detect_and_load(memCached) {
   }
 
   return (function __() {
-    if (moduleData.interop.init) moduleData.interop.init();
+    if (moduleData.interop.init) moduleData.interop.init(moduleData.interop);
     // note: we may have post processing later... who knows, leave the option open we can always close it.
 
     addDetonators(moduleData.interop);

@@ -259,7 +259,7 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       }).unref();
     }
 
-    let subCtx = opsys.walkerSubr();
+    let subCtx = opsys.walkerSubr(opsys.walker);
 
     opsys.walker.function(options.scan, subCtx, subCtx);
 
@@ -277,14 +277,14 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
 
         return {
           abs: x,
-          exe: path.join(x, obj.feedData.package.command),
+          exe: obj.exeFile ? obj.exeFile : path.join(x, obj.feedData.package.command),
           rel: rel,
           eap: edition !== STABLE_APPEND,
           name: obj.feedData.id.toLowerCase(),
           append: edition,
           versions: _.chain([
             obj.feedData.build,
-            obj.feedData.name
+            obj.feedData.version
           ])
             .compact()
             .uniq()
