@@ -105,6 +105,11 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
 
   const apiMode = !!opts;
 
+  const productNameAliases = [
+    // TODO: Specify JB 2Char ShortHand.
+    ['intellij', 'idea', 'idea-u', 'idea-c']
+  ];
+
   function bindLoDash(lo) {
     function escapeRegexp(str) {
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Using_Special_Characters
@@ -227,8 +232,29 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       }
 
       function ___name_filter_functor(name) {
+        // 1. Try a direct match across our name fields
+        // 2. Try known aliases (if any)
+        // 3. Try partial matches if able.
+
+        const cleanName = name.trim().toLowerCase();
+
+        const aliasSet = _.first(_.filter(productNameAliases, (x) => _.some(x, (xs)=>xs===cleanName)));
+
+        const partialMatcher = new RegExp(_.escapeRegexp(name.trim().toLowerCase()), 'i');
+
+        const exactMatcher = (x, v) => x.idName === v || x.idNameNS === v || x.name === v;
+
         return function ____name_filter(x) {
-          return x.name === name.trim().toLowerCase();
+          if (exactMatcher(x, cleanName)) return true;
+
+          if (aliasSet) {
+            const cnt = aliasSet.length;
+            for (let i = 0; cnt > i; i++) {
+              if (exactMatcher(x, aliasSet[i])) return true;
+            }
+          }
+
+          return (partialMatcher.test(x.name) || partialMatcher.test(x.idName) || partialMatcher.test(x.idNameNS));
         }
       }
 
@@ -266,7 +292,10 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
     const apps = subCtx.apps;
     const LONG_FORM_VERSION_OFFSET = 0;
 
-    const appInfo = _.chain(apps)
+    const appInfo = _.chain(apps) // id startsWith ReSharper
+      .filter(function _unsupported_apps(app) {
+        return !app.feedData.id.startsWith('ReSharper');
+      })
       .map(function _parse_path_mapper(obj) {
         const x = obj.baseDir;
         const rel = x.replace(options.scan + '/', '');
@@ -280,7 +309,9 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
           exe: obj.exeFile ? obj.exeFile : path.join(x, obj.feedData.package.command),
           rel: rel,
           eap: edition !== STABLE_APPEND,
-          name: obj.feedData.id.toLowerCase(),
+          productName: obj.feedData.id.toLowerCase(),
+          idName: obj.feedData.id.toLowerCase(),
+          idNameNS: _.first(obj.feedData.id.toLowerCase().split('-')),
           append: edition,
           versions: _.chain([
             obj.feedData.build,
