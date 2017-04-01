@@ -1,18 +1,18 @@
 {
   "name": "open_jetbrains_ide",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.5.0",
+  "description": "Find and report on or find and open a selected JetBrains IDE.",
   "main": "run.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "scripts": { },
   "author": "Glenn R. Martin",
-  "license": "UNLICENSED",
+  "license": "BSD-2-Clause",
+  "bin": {
+    "open_jetbrains_ide": "run.js"
+  },
   "dependencies": {
     "command-line-args": "^4.0.2",
     "command-line-usage": "^4.0.0",
     "lodash": "^4.17.4",
-    "sha.js": "^2.4.8",
-    "shelljs": "^0.7.7"
+    "sha.js": "^2.4.8"
   }
 }
