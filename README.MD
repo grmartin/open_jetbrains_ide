@@ -136,4 +136,4 @@ Options correspond to the long form name of the parameters as found within the C
 
 ### Examples
 
-More usage examples for both the commandline (*nix) and of the API call can be found in the [examples](examples) folder.
+More usage examples for both the commandline (*nix) and of the API call can be found in the [examples](https://github.com/grmartin/open_jetbrains_ide/tree/master/examples) folder.

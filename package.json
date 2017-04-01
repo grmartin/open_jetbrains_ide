@@ -1,11 +1,15 @@
 {
   "name": "open_jetbrains_ide",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Find and report on or find and open a selected JetBrains IDE.",
   "main": "run.js",
   "scripts": { },
   "author": "Glenn R. Martin",
   "license": "BSD-2-Clause",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grmartin/open_jetbrains_ide.git"
+  },
   "bin": {
     "open_jetbrains_ide": "run.js"
   },
