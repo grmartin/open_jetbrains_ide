@@ -6,6 +6,11 @@
 *.local
 .*
 
+
+process_npmignore.sh
+.mailmap
+base.npmignore
+
 manifest.json
 __*
 *.__*

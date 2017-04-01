@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const isCli = () => require.main === module || !module.parent;
 
 module.exports = (function open_jetbrains_ide(opts, extra_args) {
