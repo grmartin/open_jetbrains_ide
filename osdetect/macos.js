@@ -1,7 +1,6 @@
 module.exports = {
   toolboxAppScanRoot: '~/Library/Application Support/JetBrains/Toolbox/apps',
-  //cacheRoot: '~/Library/Caches/##NODEPKG##/##HASH##',
-  //hasCache: true
+
   walkerSubr: function _walkerSubrFunctor_macOs(walker) {
     const fs = require('fs'),
       _ = require('lodash'),
@@ -10,8 +9,8 @@ module.exports = {
     obj = (resultType, filePath, stat, trackingContext) => {
 
       const process = (trackingContext) =>
-        trackingContext.baseDir && trackingContext.feedFile && trackingContext.appPath && trackingContext.exeFile &&
-        trackingContext.feedFile.startsWith(trackingContext.baseDir) && trackingContext.appPath.startsWith(trackingContext.baseDir) && trackingContext.exeFile.startsWith(trackingContext.appPath);
+      trackingContext.baseDir && trackingContext.feedFile && trackingContext.appPath && trackingContext.exeFile &&
+      trackingContext.feedFile.startsWith(trackingContext.baseDir) && trackingContext.appPath.startsWith(trackingContext.baseDir) && trackingContext.exeFile.startsWith(trackingContext.appPath);
 
       const storeIfAble = (trackingContext) => {
         if (process(trackingContext)) {
@@ -56,5 +55,4 @@ module.exports = {
 
     return obj;
   }
-
 };

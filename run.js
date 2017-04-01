@@ -1,6 +1,8 @@
+const isCli = () => require.main === module || !module.parent;
+
 module.exports = (function open_jetbrains_ide(opts, extra_args) {
-  const path = require('path');
-  const opsys = require('./osdetect');
+  const apiMode = !!opts || !isCli();
+  const _ = require('lodash');
 
   /* External Constants */
   const EXIT_SUCCESS = 0;
@@ -8,7 +10,6 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
   const EXIT_APP_NOT_FOUND = 100;
 
   const ENV_SCAN_DIR = 'OJI_SCRIPT_SCAN_DIR';
-  const ENV_CACHE_DIR = 'OJI_SCRIPT_CACHE_DIR';
 
   /* Internal Constants */
   const ANY_VERSION = '*';
@@ -32,14 +33,14 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       alias: 'a',
       type: Boolean,
       defaultValue: false,
-      description: "Any version, including EAP (ignores -e and -t)."
-    }, // overrides (skips) EAP and VERSION filters
+      description: "Any release quality. EAP or Release."
+    },
     {
       name: 'eap',
       alias: 'e',
       type: Boolean,
       defaultValue: false,
-      description: "Specify that we should allow EAP versions in our result set."
+      description: "Specify that we should allow EAP versions in our result set, by default only formal releases are returned."
     },
     {
       name: 'targetVersion',
@@ -55,13 +56,6 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       defaultValue: DEFAULT_VALUE,
       description: "The location on disk in which to scan for JetBrains Applications."
     },
-    /*{
-      name: 'nocache',
-      alias: 'n',
-      type: Boolean,
-      defaultValue: false,
-      description: "Prevent caching of process intensive data, and ignore caches if available."
-    },*/
     {
       name: 'jsonOnly',
       alias: 'j',
@@ -86,8 +80,7 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
           name: null,
           summary: "Environment variables only change the defaults, their values can still be modified at invocation via switches."
         },
-        {name: ENV_SCAN_DIR, summary: 'Directory to scan for applications.'},
-        //{name: ENV_CACHE_DIR, summary: 'Default caching directory.'}
+        {name: ENV_SCAN_DIR, summary: 'Directory to scan for applications.'}
       ]
     },
     {
@@ -103,11 +96,9 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
     }
   ];
 
-  const apiMode = !!opts;
-
   const productNameAliases = [
     // TODO: Specify JB 2Char ShortHand.
-    ['intellij', 'idea', 'idea-u', 'idea-c']
+    ['intellij', 'idea'] // -u vs -c is part of the productName and or idName... Not neede in aliases... and can call the wrong IDE if you have both.
   ];
 
   function bindLoDash(lo) {
@@ -162,51 +153,44 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
   }
 
   function packageArgs(optionsObject, argumentsArray) {
-    optionsObject._unknown = argumentsArray || [];
+    optionsObject._unknown = argumentsArray ?
+      _.isString(argumentsArray) ?
+        [argumentsArray] : argumentsArray
+      : [];
     return optionsObject;
   }
 
-  let executionCount = 0;
+  if (apiMode) {
+    if (arguments.length === 1 && (_.isArray(arguments[0]) || _.isString(arguments[0]))) {
+      extra_args = arguments[0];
+      opts = {};
+    }
 
-  return (function _main(_, fs, shell, hasher, package) {
+    opts = _.assign(
+      function _defaulter() {
+        let out = {};
+        _.forEach(optionDefinitions, function (value, idx) {
+          if (value.defaultValue !== undefined) {
+            out[value.name] = value.defaultValue;
+          }
+        });
+        return out;
+      }(),
+      opts
+    );
+  }
 
+  return (function _main(fs, path, hasher, opsys) {
     bindLoDash(_);
 
     let logger = console;
 
     const options = (function __manipulateResults(parsed) {
 
-      parsed.scan = opsys.realizeTilde(parsed.scan === DEFAULT_VALUE ? opsys.toolboxAppScanRoot : parsed.scan);
+      parsed.scan = opsys.realizeTilde((parsed.scan||DEFAULT_VALUE) === DEFAULT_VALUE ? opsys.toolboxAppScanRoot : parsed.scan);
       parsed._unknown = _.map(parsed._unknown || [], opsys.realizeTilde);
       parsed.targetVersion = parsed.targetVersion === ANY_VERSION ? null : parsed.targetVersion;
       parsed.jsonOnly = parsed.jsonOnly || parsed.jsonSimple || apiMode;
-
-
-      if (parsed.jsonOnly) {
-
-        logger = (function () {
-          let data = [];
-          const _hr = function _hrTime() {
-            const hrTime = process.hrtime();
-            return hrTime[0] * 1000000 + hrTime[1] / 1000;
-          };
-          return {
-            log: (x) => data.push({level: 'log', msg: x, at: this._hr()}),
-            info: (x) => data.push({level: 'info', msg: x, at: this._hr()}),
-            error: (x) => data.push({level: 'error', msg: x, at: this._hr()}),
-            warn: (x) => data.push({level: 'warn', msg: x, at: this._hr()}),
-            dir: (obj)=>{},
-            time: (label)=>{},
-            timeEnd: (label)=>{},
-            trace: (x) => data.push({level: 'trace', msg: x, at: this._hr()}),
-            assert: ()=>{},
-
-            data: () => data,
-
-            _original_log: console.log
-          }
-        })();
-      }
 
       function ___display_help() {
         console.error(require('command-line-usage')(usageDefinition));
@@ -234,13 +218,13 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       function ___name_filter_functor(name) {
         // 1. Try a direct match across our name fields
         // 2. Try known aliases (if any)
-        // 3. Try partial matches if able.
+        // 3. Try partial matches if able. (assuming the string specified is 4 or more characters.)
 
         const cleanName = name.trim().toLowerCase();
 
-        const aliasSet = _.first(_.filter(productNameAliases, (x) => _.some(x, (xs)=>xs===cleanName)));
+        const aliasSet = _.first(_.filter(productNameAliases, (x) => _.some(x, (xs) => xs === cleanName)));
 
-        const partialMatcher = new RegExp(_.escapeRegexp(name.trim().toLowerCase()), 'i');
+        const partialMatcher = cleanName.length <= 3 ? {test:noopFunctor(false)} : new RegExp(_.escapeRegexp(cleanName), 'i');
 
         const exactMatcher = (x, v) => x.idName === v || x.idNameNS === v || x.name === v;
 
@@ -269,8 +253,9 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
 
       if (!parsed.any) {
         if (parsed.eap) filters.push(parsed.eap ? ___eap_filter : not(___eap_filter));
-        if (parsed.targetVersion && parsed.targetVersion !== DEFAULT_VALUE) filters.push(___version_filter_functor(parsed.targetVersion));
       }
+
+      if (parsed.targetVersion && parsed.targetVersion !== DEFAULT_VALUE) filters.push(___version_filter_functor(parsed.targetVersion));
       if (parsed._custom.name) filters.push(___name_filter_functor(parsed._custom.name));
 
       parsed._custom.filters = filters;
@@ -343,16 +328,14 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
         .head()
         .value() || null;
 
-    if (!foundApp)
-      process.exit(EXIT_APP_NOT_FOUND);
 
     if (options.jsonOnly) {
+      // TODO: Don't return 'filters' in JSON return or Output Modes.
       //noinspection RedundantConditionalExpressionJS / RE: readbility
       const jsonOut = _.assign(
         options.jsonSimple ? {} : {
           options: options,
-          appInfo: appInfo,
-          log: logger.data(),
+          appInfo: appInfo
         },
         {
           resultantApp: foundApp ? {path: foundApp.exe, args: options._custom.passThruArgs, obj: foundApp} : false,
@@ -367,13 +350,16 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       return console.log(JSON.stringify(jsonOut));
     }
 
+    if (!foundApp)
+      return process.exit(EXIT_APP_NOT_FOUND);
+
     longRun(foundApp.exe, options._custom.passThruArgs);
 
     process.exit(EXIT_SUCCESS);
 
-  })(require('lodash'), require('fs'), require('shelljs'), (v) => require('sha.js')('sha256').update(v, 'utf8').digest('hex'), require('./package'));
+  })(require('fs'), require('path'), (v) => require('sha.js')('sha256').update(v, 'utf8').digest('hex'), require('./osdetect/osdetect'));
 });
 
-if (require.main === module) {
+if (isCli()) {
   module.exports();
 }

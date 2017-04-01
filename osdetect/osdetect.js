@@ -74,12 +74,6 @@ module.exports = (function detect_and_load(memCached) {
 
         return obj;
       }
-      // walkerSubr: function _walk_proc(resultType, filePath, stat) {
-      //   console.log("Empty Directory Walker invoked.");
-      //   console.trace({resultType, filePath, stat});
-      //   return true;
-      // }
-
     }
   };
 
@@ -92,11 +86,11 @@ module.exports = (function detect_and_load(memCached) {
   } else if (isUx) {
     _.assign(moduleData.interop, require('./linux.js'));
   } else {
-    // TODO: THROW
+    throw new Error('We do not know how to support your current operating environment.');
   }
 
   function addDetonators(moduleData) {
-    const booms = ['toolboxAppScanRoot', 'cacheRoot'];
+    const booms = ['toolboxAppScanRoot'];
     const len = booms.length;
     for (let i = 0; len > i; i++) {
       const prop = booms[i];
