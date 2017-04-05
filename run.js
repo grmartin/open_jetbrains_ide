@@ -99,8 +99,17 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
   ];
 
   const productNameAliases = [
-    // TODO: Specify JB 2Char ShortHand.
-    ['intellij', 'idea'] // -u vs -c is part of the productName and or idName... Not neede in aliases... and can call the wrong IDE if you have both.
+    // The real value must be in the array of aliases for that program for the filtering process to work.
+    // JB ProdCode ShortHand. All IntelliJ product does are:  ("CL", "DB", "GO", "IC", "IU", "MPS", "OC", "PC", "PE", "PS", "PY", "RM", "RS", "WS")
+    ['idea', 'intellij', 'ic', 'iu'], // -u vs -c is part of the productName and or idName... Not neede in aliases... and can call the wrong IDE if you have both.,
+    ['rubymine', 'mine', 'rubydev', 'rm'],
+    ['pycharm', 'charm', 'pyh', 'py', 'pe', 'pc'],
+    ['webstorm', 'wstorm', 'wi', 'ws'],
+    ['phpstorm', 'pstorm', 'ps'],
+    ['datagrip', 'dbe', 'db'],
+    ['appcode', 'objc', 'oc'],
+    ['gogland', 'go'],
+    ['clion', 'cl']
   ];
 
   function bindLoDash(lo) {
