@@ -1,6 +1,6 @@
 # open_jetbrains_ide
 
-This project started out as a way to launch a JetBrains IDE (installed via their Toolbox application) via the command line. JetBrains has its own Command Line launcher script, however it binds to the account of the user who installed it, and when an IDE is upgraded the script simply stops working as it is not pointing to an invalid path.
+This project started out as a way to launch a JetBrains IDE (installed via their Toolbox application) via the command line. JetBrains has its own Command Line launcher script, however it binds to the account of the user who installed it, and when an IDE is upgraded the script [simply stops working](https://youtrack.jetbrains.com/issue/ALL-1098) as it is not pointing to an invalid path.
 
 ## Project Links
 
