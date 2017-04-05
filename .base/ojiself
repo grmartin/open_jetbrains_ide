@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# vim: ft=sh
+#echo $0
+open_jetbrains_ide $( basename $0 ) $@
