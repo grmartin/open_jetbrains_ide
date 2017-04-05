@@ -5,6 +5,8 @@ const isCli = () => require.main === module || !module.parent;
 module.exports = (function open_jetbrains_ide(opts, extra_args) {
   const apiMode = !!opts || !isCli();
   const _ = require('lodash');
+  const fs = require('fs');
+  const path = require('path');
 
   /* External Constants */
   const EXIT_SUCCESS = 0;
@@ -12,6 +14,8 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
   const EXIT_APP_NOT_FOUND = 100;
 
   const ENV_SCAN_DIR = 'OJI_SCRIPT_SCAN_DIR';
+  const ENV_CLEAN_CWD = 'OJI_SCRIPT_CLEAN_CWD';
+  const ENV_LIT_ARGS = 'OJI_SCRIPT_LITERAL_ARGS';
 
   /* Internal Constants */
   const ANY_VERSION = '*';
@@ -82,7 +86,9 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
           name: null,
           summary: "Environment variables only change the defaults, their values can still be modified at invocation via switches."
         },
-        {name: ENV_SCAN_DIR, summary: 'Directory to scan for applications.'}
+        {name: ENV_SCAN_DIR, summary: 'Directory to scan for applications.'},
+        {name: ENV_CLEAN_CWD, summary: 'Set to truth-y to leave CWD undefined in the launched process. Otherwise the new program will take on the CWD of the executor.'},
+        {name: ENV_LIT_ARGS, summary: 'Treat additional arguments as literal. (Do not try to match up with the CWD.)'}
       ]
     },
     {
@@ -171,6 +177,23 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
     return optionsObject;
   }
 
+  function truthy(value) {
+    if (!value) return false;
+    if (value === 0) return false;
+    value = value.toLowerCase().trim();
+    if (!value) return false;
+    if (value === '0' || value === 'no'|| value === 'off'|| value === 'false'|| value === 'n'|| value === 'f') return false;
+    return true;
+  }
+
+  function pathify(x) {
+    const examine = path.join(process.cwd(), x);
+    if (fs.existsSync(examine)) {
+      return examine;
+    }
+    return x;
+  }
+
   if (apiMode) {
     if (arguments.length === 1 && (_.isArray(arguments[0]) || _.isString(arguments[0]))) {
       extra_args = arguments[0];
@@ -191,14 +214,16 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
     );
   }
 
-  return (function _main(fs, path, hasher, opsys) {
+  return (function _main(hasher, opsys) {
     bindLoDash(_);
 
     let logger = console;
 
     const options = (function __manipulateResults(parsed) {
 
-      parsed.scan = opsys.realizeTilde((parsed.scan||DEFAULT_VALUE) === DEFAULT_VALUE ? opsys.toolboxAppScanRoot : parsed.scan);
+      parsed.scan = opsys.realizeTilde((parsed.scan||DEFAULT_VALUE) === DEFAULT_VALUE ?
+        process.env[ENV_SCAN_DIR] ?
+          process.env[ENV_SCAN_DIR] :  opsys.toolboxAppScanRoot : parsed.scan);
       parsed._unknown = _.map(parsed._unknown || [], opsys.realizeTilde);
       parsed.targetVersion = parsed.targetVersion === ANY_VERSION ? null : parsed.targetVersion;
       parsed.jsonOnly = parsed.jsonOnly || parsed.jsonSimple || apiMode;
@@ -258,7 +283,7 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       parsed._custom = {};
       parsed._custom.scanHashed = hasher(parsed.scan);
       parsed._custom.name = parsed._unknown[0];
-      parsed._custom.passThruArgs = _.drop(parsed._unknown, 1);
+      parsed._custom.passThruArgs = _.map(_.drop(parsed._unknown, 1), truthy(process.env[ENV_LIT_ARGS]) ? (x)=>x : pathify);
 
       let filters = [];
 
@@ -274,10 +299,12 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       return parsed;
     })(opts ? packageArgs(opts, extra_args) : require('command-line-args')(optionDefinitions, {partial: true}));
 
+
     function longRun(exe, args) {
       require('child_process').spawn(exe, args, {
         detached: true,
-        stdio: 'ignore'
+        stdio: 'ignore',
+        cwd: truthy(process.env[ENV_CLEAN_CWD]) ? undefined : process.cwd()
       }).unref();
     }
 
@@ -368,7 +395,7 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
 
     process.exit(EXIT_SUCCESS);
 
-  })(require('fs'), require('path'), (v) => require('sha.js')('sha256').update(v, 'utf8').digest('hex'), require('./osdetect/osdetect'));
+  })((v) => require('sha.js')('sha256').update(v, 'utf8').digest('hex'), require('./osdetect/osdetect'));
 });
 
 if (isCli()) {

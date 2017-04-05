@@ -2,6 +2,11 @@
 
 This project started out as a way to launch a JetBrains IDE (installed via their Toolbox application) via the command line. JetBrains has its own Command Line launcher script, however it binds to the account of the user who installed it, and when an IDE is upgraded the script simply stops working as it is not pointing to an invalid path.
 
+## Project Links
+
+- Main Project: [GitHub](https://github.com/grmartin/open_jetbrains_ide), [NPM](https://www.npmjs.com/package/open_jetbrains_ide).
+- Linux/BSD (Mac) Replacement Shell Scripts: [GitHub (Orphan)](https://github.com/grmartin/open_jetbrains_ide/tree/nix-shell-scripts).
+
 ## Command Line Options:
 ### Arguments:
 
@@ -16,7 +21,11 @@ This project started out as a way to launch a JetBrains IDE (installed via their
 
 Environment variables only change the defaults, their values can still be modified at invocation via switches.
 
-- `OJI_SCRIPT_SCAN_DIR`   Directory to scan for applications.
+- `OJI_SCRIPT_SCAN_DIR`       Directory to scan for applications.
+- `OJI_SCRIPT_CLEAN_CWD`      Set to truth-y to leave CWD undefined in the launched process. Otherwise the new program will take on the CWD of the executor.
+- `OJI_SCRIPT_LITERAL_ARGS`   Treat additional arguments as literal. (Do not try to match up with the CWD.)
+
+
 
 ### Status Codes:
 
