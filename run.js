@@ -159,7 +159,7 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
   function not(fctn) {
     fctn = fctn || noopFunctor(false);
     return function _not(x) {
-      return fctn(x);
+      return !fctn(x);
     }
   }
 
@@ -288,7 +288,7 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
       let filters = [];
 
       if (!parsed.any) {
-        if (parsed.eap) filters.push(parsed.eap ? ___eap_filter : not(___eap_filter));
+        filters.push(parsed.eap ? ___eap_filter : not(___eap_filter));
       }
 
       if (parsed.targetVersion && parsed.targetVersion !== DEFAULT_VALUE) filters.push(___version_filter_functor(parsed.targetVersion));
