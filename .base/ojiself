@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 # vim: ft=sh
 
-open_jetbrains_ide $( basename $0 ) $@
+open_jetbrains_ide "$( basename "$0" )" "$@"
