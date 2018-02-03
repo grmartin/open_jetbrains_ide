@@ -114,7 +114,8 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
     ['phpstorm', 'pstorm', 'ps'],
     ['datagrip', 'dbe', 'db'],
     ['appcode', 'objc', 'oc'],
-    ['gogland', 'go'],
+    ['rider'],
+    ['goland', 'gogland', 'go'],
     ['clion', 'cl']
   ];
 

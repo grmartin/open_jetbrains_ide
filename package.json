@@ -1,6 +1,6 @@
 {
   "name": "open_jetbrains_ide",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Find and report on or find and open a selected JetBrains IDE.",
   "main": "run.js",
   "scripts": {},
