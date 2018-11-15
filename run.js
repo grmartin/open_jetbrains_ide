@@ -318,7 +318,11 @@ module.exports = (function open_jetbrains_ide(opts, extra_args) {
 
     const appInfo = _.chain(apps) // id startsWith ReSharper
       .filter(function _unsupported_apps(app) {
-        return !app.feedData.id.startsWith('ReSharper');
+        const
+            id = _.get(app, "feedData.id") || "",
+            command = _.get(app, "feedData.package.command");
+        return !id.startsWith('ReSharper') &&
+                !!command;
       })
       .map(function _parse_path_mapper(obj) {
         const x = obj.baseDir;
