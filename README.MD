@@ -1,4 +1,6 @@
 # open_jetbrains_ide
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgrmartin%2Fopen_jetbrains_ide.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgrmartin%2Fopen_jetbrains_ide?ref=badge_shield)
+
 
 This project started out as a way to launch a JetBrains IDE (installed via their Toolbox application) via the command line. JetBrains has its own Command Line launcher script, however it binds to the account of the user who installed it, and when an IDE is upgraded the script [simply stops working](https://youtrack.jetbrains.com/issue/ALL-1098) as it is not pointing to an invalid path.
 
@@ -146,3 +148,7 @@ Options correspond to the long form name of the parameters as found within the C
 ### Examples
 
 More usage examples for both the commandline (*nix) and of the API call can be found in the [examples](https://github.com/grmartin/open_jetbrains_ide/tree/master/examples) folder.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgrmartin%2Fopen_jetbrains_ide.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgrmartin%2Fopen_jetbrains_ide?ref=badge_large)
